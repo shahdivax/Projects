@@ -4,7 +4,8 @@ from tkinter import ttk
 import sqlite3
 import pandas as pd
 
-
+import ctypes
+ctypes.windll.user32.ShowWindow( ctypes.windll.kernel32.GetConsoleWindow(), 0 )
 
 
 class Accounts:
@@ -36,7 +37,7 @@ class Accounts:
         self.create_button_buttons()
 
     def create_button_buttons(self):
-        Button(text='Delet Selected',command=self.on_delet_selected_button_clicked,bg='red',fg='white').grid(row=8,column=0,sticky=W,pady=10)
+        Button(text='Delet Selected',command=self.on_delet_selected_button_clicked,bg='red',fg='white').grid(row=8,column=0,sticky=W,pady=10,padx=10)
         Button(text='Edit selected',command=self.on_modify_selected_button_clicked,bg='purple',fg='white').grid(row=8,column=1,sticky=W)
 
             
@@ -117,7 +118,9 @@ class Accounts:
         self.root.destroy()
         self.window = Tk()
         self.window.title('{}'.format(name))
-        
+        self.window.geometry("650x450")
+        self.window.resizable(width=False, height=False)
+    
         self.tree = ttk.Treeview(height=10 , columns=(1,2),style="Treeview")
         labelframe = LabelFrame(self.window, text='{}'.format(name), bg="sky blue", font="helvetica 10")
         labelframe.grid(row=0, column=0, padx=8, pady=8, sticky='ew')
@@ -154,36 +157,41 @@ class Accounts:
         Button(text='Delete Selected',command=lambda: self.delete_data(name.replace(" ","_")),bg='red',fg='white').grid(row=8,column=0,sticky=W,pady=10,padx=10)
         Button(text='Edit selected',command=lambda: self.open_modify(name.replace(" ","_")),bg='purple',fg='white').grid(row=8,column=1,sticky=W)
         Button(text='Exoprt to Excel',command=lambda: self.export_to_exel(name.replace(" ","_")),bg='blue',fg='white').grid(row=9,column=1,sticky=W)
+        Button(text='Back',command=self.call_main,bg='orange',fg='Black').grid(row=9,column=0,sticky=W,pady=10,padx=10)
+
+        
     
     def open_modify(self,name):
         index = self.tree.item(self.tree.selection())['values'][2]
         credit = self.tree.item(self.tree.selection())['values'][3]
         Date = self.tree.item(self.tree.selection())['values'][1]
         Debit = self.tree.item(self.tree.selection())['values'][0]
-        self.window = Toplevel()
-        self.window.title('Update Contact')
-        Label(self.window,text='Credit:').grid(row=0,column=1)
-        c = Entry(self.window, textvariable=StringVar(self.window, value=credit))
+        self.win = Toplevel()
+        self.win.title('Update Contact')
+        Label(self.win,text='Credit:').grid(row=0,column=1)
+        c = Entry(self.win, textvariable=StringVar(self.win, value=credit))
         c.grid(row=0, column=2)
-        Label(self.window, text='Date:').grid(row=1, column=1)
-        date = Entry(self.window, textvariable=StringVar(self.window, value=Date))
+        Label(self.win, text='Date:').grid(row=1, column=1)
+        date = Entry(self.win, textvariable=StringVar(self.win, value=Date))
         date.grid(row=1, column=2)
-        Label(self.window, text='Debit:').grid(row=2, column=1)
-        d = Entry(self.window,textvariable=StringVar(self.window, value=Debit))
+        Label(self.win, text='Debit:').grid(row=2, column=1)
+        d = Entry(self.win,textvariable=StringVar(self.win, value=Debit))
         d.grid(row=2, column=2)
 
 
-        Button(self.window, text='Update Contact', command=lambda: self.update_contacts(
+        Button(self.win, text='Update Contact', command=lambda: self.update_contacts(
             d.get(),date.get(), c.get(),index,name)).grid(row=3, column=2, sticky=E)
         
 
-        self.window.mainloop()
+        self.win.mainloop()
 
+        
+        
     def update_contacts(self, d, date,c,index,name):
         query = 'UPDATE {0} SET credit = ? , debit = ? , date = ? where no = {1}'.format(name,index)
         parameters = (c, d, date)
         self.execute_db_query(query, parameters)
-        self.window.destroy()
+        self.win.destroy()
         items = self.tree.get_children()
         for item in items:
             self.tree.delete(item)
@@ -239,6 +247,9 @@ class Accounts:
         df.to_excel(writer)
         
         writer.save()
+        
+        self.message = Label(text="File Created",fg='red')
+        self.message.grid(row=3,column=0)
 
         items = self.tree.get_children()
         for item in items:
@@ -248,7 +259,13 @@ class Accounts:
         for row in contact_entries:
                 self.tree.insert('',0,text = row[1], values=(row[2],row[3],row[0],row[1]))
             
-                
+    def call_main(self):
+        self.window.destroy()
+        root =Tk()
+        root.title('Your Accountant')
+        
+        application = Accounts(root)
+        root.mainloop()
         
         
             
@@ -259,7 +276,7 @@ if __name__ == '__main__':
     root =Tk()
     root.title('Your Accountant')
     application = Accounts(root)
-    root.geometry("350x450")
+    root.geometry("350x400")
     root.resizable(width=False, height=False)
     root.mainloop()
      
